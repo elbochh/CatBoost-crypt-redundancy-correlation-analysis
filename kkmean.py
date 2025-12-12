@@ -21,19 +21,17 @@ from pathlib import Path
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import RobustScaler
 
-# ===================== Config =====================
-INPUT_FILE  = "merged_all.parquet"    # auto-detect parquet/csv
+INPUT_FILE  = "merged_all.parquet"    
 OUTPUT_FILE = "ohlcv_clusters.csv"
 N_CLUSTERS  = 2
 
 # volatility controls
-RET_COL          = "ret_1d"       # fallback to pct_change(close) if missing
-VOL_LOOKBACK     = 63             # rolling window in days
-ANNUALIZE_DAYS   = 365.0          # use 252.0 if you prefer equity-style annualization
-AGGREGATION      = "median"       # "median" or "mean"
-MIN_OBS_PER_SYM  = 200            # skip symbols with too-few observations
+RET_COL          = "ret_1d"       
+VOL_LOOKBACK     = 63             
+ANNUALIZE_DAYS   = 365.0 #252.0 
+AGGREGATION      = "median"#"mean"
+MIN_OBS_PER_SYM  = 200            
 
-# column detection preferences
 SYMBOL_COL_CANDS = ["symbol", "ticker", "asset", "coin"]
 CLOSE_COL_CANDS  = ["close", "adj_close", "price_close"]
 
@@ -108,14 +106,14 @@ def main():
     # drop unusable
     df = df.dropna(subset=[symbol_col, close_col])
     if df.empty:
-        raise ValueError("⚠️ No valid rows after basic cleaning.")
+        raise ValueError("No valid rows after basic cleaning.")
 
-    print(f"✅ Using symbol col: {symbol_col}, close col: {close_col}")
+    print(f"Using symbol col: {symbol_col}, close col: {close_col}")
 
     # compute per-symbol realized volatility
     vt = per_symbol_vol(df, symbol_col=symbol_col, close_col=close_col)
     if vt.empty:
-        raise ValueError("⚠️ No valid volatility computed. Check data / MIN_OBS_PER_SYM / VOL_LOOKBACK.")
+        raise ValueError( No valid volatility computed. Check data / MIN_OBS_PER_SYM / VOL_LOOKBACK.")
 
     # cluster on volatility only
     X = vt[["vol"]].values
@@ -125,7 +123,7 @@ def main():
     labels = km.fit_predict(Xs)
     vt["cluster"] = labels
 
-    # map clusters to human-friendly names by cluster mean (low_vol / high_vol)
+    # map clusters to names by cluster mean (low_vol / high_vol)
     means = vt.groupby("cluster")["vol"].mean().sort_values()
     order = {cluster_id: rank for rank, cluster_id in enumerate(means.index)}
     vt["cluster_rank"] = vt["cluster"].map(order)
@@ -135,9 +133,8 @@ def main():
     out = out.sort_values("vol")
     out.to_csv(OUTPUT_FILE, index=False)
 
-    print(f"✅ Saved {len(out):,} symbols with labels → {OUTPUT_FILE}")
+    print(f"Saved {len(out):,} symbols with labels → {OUTPUT_FILE}")
     print(out.groupby("cluster_name")["vol"].agg(["count","mean","min","max"]))
-    print("\nTip: Spot-check a few symbols from each cluster to sanity-check the split.")
 
 if __name__ == "__main__":
     main()
