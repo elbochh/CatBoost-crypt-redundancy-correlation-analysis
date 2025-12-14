@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Per-cluster CatBoost (MAE) with time-series CV (but run only the most recent fold),
@@ -28,7 +26,7 @@ warnings.filterwarnings("ignore", message=".*'squared' is deprecated.*", categor
 
 # --- Model: CatBoost ---
 from catboost import CatBoostRegressor, Pool
-import joblib  # for the optional pickle ".pt" save
+import joblib  
 
 # ==============================
 #            CONFIG
@@ -42,12 +40,12 @@ CONFIG = {
 
     # CV / windowing (we will ONLY use the most recent fold)
     "n_folds": 5,
-    "train_len": 999999,   # days (expanding)
-    "val_len":   90,       # days
-    "test_len":  60,       # days (your last fold test)
+    "train_len": 999999,   
+    "val_len":   90,      
+    "test_len":  60,      
 
     # Feature selection via SHAP-like importance
-    "top_features_per_fold": 30,   # up to this many features
+    "top_features_per_fold": 30,   
     "max_lags_per_base": 4,        # limit how many lags of same base feature
     "lag_suffix_regex": r"_lag(\d+)$",
 
@@ -68,7 +66,6 @@ CONFIG = {
         "verbose": False
     },
 
-    # Early stopping controls applied at fit-time
     "early_stopping_rounds": 200,
     "use_best_model": True,
 
@@ -77,8 +74,8 @@ CONFIG = {
         "pop_size": 25,
         "n_gen": 6,
         "elite_k": 6,
-        "tourn_size": 3,       # tournament selection size
-        "mut_prob": 0.35,      # per-parameter mutation probability
+        "tourn_size": 3,       
+        "mut_prob": 0.35,     
         "seed": 1338
     },
 
@@ -109,7 +106,6 @@ def detect_target(df: pd.DataFrame) -> str:
     if "y_ret_next" in df.columns:
         return "y_ret_next"
     if "close" in df.columns:
-        # We won’t write back; just signal temp target name
         return "__tmp_y"
     raise ValueError("No target found and 'close' missing to derive y_ret_next.")
 
@@ -277,7 +273,8 @@ def print_fold_header(cluster_id, dates):
 
 # -------------------- GA: CatBoost param search --------------------
 
-# Search space ranges (feel free to widen/narrow later)
+# Search space ranges 
+                               
 CAT_SPACE = {
     "depth":          (4, 10),        # int
     "learning_rate":  (0.01, 0.15),   # float
@@ -285,7 +282,6 @@ CAT_SPACE = {
     "subsample":      (0.5, 1.0),     # float
     "rsm":            (0.5, 1.0),     # float
     "iterations":     (800, 3000),    # int
-    # bootstrap_type kept fixed as Bernoulli for stability
 }
 
 def _rand_int(lo, hi):     return int(np.random.randint(lo, hi + 1))
@@ -631,7 +627,7 @@ def main():
                 print(f"[Cluster {clus}] Saved recent {ndays}d log (with actuals) → {recent_path}")
                 print(recent_log.tail(10).to_string(index=False))
 
-    print("\n✅ Done.")
+   
 
 if __name__ == "__main__":
     main()
